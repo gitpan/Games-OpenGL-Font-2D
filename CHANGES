@@ -1,0 +1,16 @@
+
+############################################################################## 
+Games::OpenGL::Font::2D:
+
+2003-03-17 v0.01 Tels - 2 tests - first version
+2003-03-18 v0.02 Tels - 7 tests
+2003-03-21 v0.03 Tels - 7 tests - first release
+  * adapted to SDL_perl 1.20.2 (see http://bloodgate.com/perl/sdl)
+  * added pre_output() and post_output() for more speed
+  * made my own font map (courier.bmp), which made much more parameters to
+    new() neccessary: chars, chars_per_line, char_width, char_height etc.
+
+Please send me test-reports, your experiences with this and your ideas - I love
+to hear about my work!
+
+Tels <http://bloodgate.com/>
