@@ -25,6 +25,11 @@ Games::OpenGL::Font::2D:
   * post_output() restores flags to pre pre_output() way
   * document that post_output() disables writes to depth buffer
   * DESTROY method released OpenGL lists by using glDeleteLists()
+2003-04-27 v0.06 Tels - 10 tests
+  * fixed the DESTROY method
+  * copy(): GLGenLists($self->{chars}), not just 256
+  * added border_x(), border_y() and support for these in new()
+
 
 Please send me test-reports, your experiences with this and your ideas - I love
 to hear about my work!

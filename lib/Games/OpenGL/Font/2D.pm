@@ -18,7 +18,7 @@ use vars qw/@ISA $VERSION @EXPORT_OK/;
 	FONT_ALIGN_TOP FONT_ALIGN_BOTTOM
 	/;
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 ##############################################################################
 # constants
@@ -64,6 +64,8 @@ sub new
   $self->{align_x} = -1 unless defined $self->{align_x};
   $self->{align_x} = int($self->{align_x});
   $self->{align_y} = int($self->{align_x});
+  $self->{border_x} = int(abs($args->{border_x} || 0));
+  $self->{border_y} = int(abs($args->{border_y} || 0));
   
   $self->_read_font($self->{file});
   
@@ -113,9 +115,14 @@ sub _build_font
   my $ch = $self->{char_height};
   my $w = int($cw * $self->{zoom_x});
   my $h = int($ch * $self->{zoom_y});
+  my $bx = $self->{border_x};
+  my $by = $self->{border_y};
   # calculate w/h of a char in 0..1 space
+  my $cwi = ($cw+$bx)/$self->{texture_width};
+  my $chi = ($ch+$by)/$self->{texture_height};
   $cw = $cw/$self->{texture_width};
   $ch = $ch/$self->{texture_height};
+  # print "$self->{file}: $cw x $ch ($w x $h => ",$w+$bx," x ",$h+$by,") $self->{base} ($self->{texture_width} x $self->{texture_height})\n";
   my $cx = 0; my $cy = 0;
   my $c = 0;
   # loop through all characters
@@ -150,10 +157,10 @@ sub _build_font
     glEndList();
     
     # X and Y position of next char
-    $cx += $cw;
+    $cx += $cwi;
     if (++$c >= $self->{chars_per_line})
       {
-      $c = 0; $cx = 0; $cy += $ch;
+      $c = 0; $cx = 0; $cy += $chi;
       }
 
 
@@ -394,6 +401,30 @@ sub spacing
   ($self->{spacing_x}, $self->{spacing_y});
   }
 
+sub border_x
+  {
+  my $self = shift;
+
+  if (@_ > 0)
+    {
+    $self->{border_x} = iint(abs(shift));
+    $self->_build_font();
+    }
+  $self->{border_x};
+  }
+
+sub border_y
+  {
+  my $self = shift;
+
+  if (@_ > 0)
+    {
+    $self->{border_y} = iint(abs(shift));
+    $self->_build_font();
+    }
+  $self->{border_y};
+  }
+
 sub zoom
   {
   my $self = shift;
@@ -417,7 +448,7 @@ sub copy
     {
     $new->{$k} = $self->{$k};
     }
-  $new->{base} = glGenLists (256);	# get the new font 256 new lists
+  $new->{base} = glGenLists ( $self->{chars} );	# get the new font some lists
   bless $new, $class;
   $new->_build_font();
   $new;
@@ -469,7 +500,8 @@ sub DESTROY
   {
   my $self = shift;
 
-  glDeleteLists( $self->{base} ) if defined $self->{base};
+  # free the texture lists
+  glDeleteLists( $self->{base}, $self->{chars} ) if defined $self->{base};
   }
 
 1;
@@ -558,6 +590,8 @@ ref containing the following keys:
 	align_y		Align the font output in Y direction
 			Possible: FONT_ALIGN_TOP, FONT_ALIGN_BOTTOM and
 			FONT_ALIGN_CENTER
+	border_x	Space between each char in the texture in X dir
+	border_y	Likewise border_x, but in Y dir
 
 Example:
 
@@ -671,6 +705,24 @@ Please remember to enable/disable any flags that you might want.
 
 Also note, post_output() enables writes to the depth buffer, regardless of
 whether they were enabled or not before pre_output() was called.
+
+=item border_x()
+
+	$bx = $font->border_x();
+	$font->border_x( 1 );
+
+Get/set the border on the right side of each char on the texture map. E.g.
+if each char is 31 pixel wide, but occupies 32 pixel, border_x should be set
+to 1. Costly, since it rebuilds the font.
+
+=item border_y()
+
+	$by = $font->border_y();
+	$font->border_y( 1 );
+
+Get/set the border on the lower side of each char on the texture map. E.g.
+if each char is 31 pixel heigh, but occupies 32 pixel, border_y should be set
+to 1. Costly, since it rebuilds the font.
 
 =item align_x()
 

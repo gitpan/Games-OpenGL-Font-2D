@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 use strict;
 
 BEGIN
@@ -22,7 +22,8 @@ can_ok ('Games::OpenGL::Font::2D', qw/
   post_output
   align_x align_y align
   char_width char_height
-  DELETE
+  border_x border_y
+  DESTROY
   /);
 
 my $font = Games::OpenGL::Font::2D->new (
@@ -40,4 +41,7 @@ is (ref($copy), 'Games::OpenGL::Font::2D', 'copy worked');
 
 is (join(',',@{$font->color(1,1,1)}), '1,1,1', 'color');
 is (join(',',@{$font->color([0.4,0.2,0.3])}), '0.4,0.2,0.3', 'color');
+
+is ($font->border_x(), 0, 'border is 0');
+is ($font->border_y(), 0, 'border is 0');
  
