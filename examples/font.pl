@@ -15,7 +15,7 @@ BEGIN
 use SDL::App::FPS::MyFont;
 
 my $options = { 
- width => 640, height => 480, depth => 16, gl => 1, max_fps => 0
+ width => 1024, height => 768, depth => 16, useopengl => 1, max_fps => 0
  };
 
 print

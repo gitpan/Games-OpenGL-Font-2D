@@ -19,7 +19,7 @@ use SDL::Event;
 use vars qw/@ISA/;
 @ISA = qw/SDL::App::FPS/;
 
-use Games::OpenGL::Font::2D;
+use Games::OpenGL::Font::2D qw/FONT_ALIGN_RIGHT FONT_ALIGN_BOTTOM/;
 
 ##############################################################################
 
@@ -71,7 +71,7 @@ sub _gl_init_view
   glFrontFace(GL_CCW);
   glCullFace(GL_BACK);
 
-  foreach my $f (qw/font font_ver font_ver_zoom/)
+  foreach my $f (qw/font font_ver font_ver_zoom font_right font_bottom/)
     {
     $self->{$f}->screen_width( $self->width() );
     $self->{$f}->screen_height( $self->height() );
@@ -92,12 +92,13 @@ sub draw_frame
  
   $self->{font}->output ( 5, $self->height() - 20, int($current_fps) . " FPS" );
 
-  $self->{font}->output ( ($current_time / 200) % 400 + 50, 180,
-     'Hello SDL::App::FPS!' );
+  $self->{font}->output ( ($current_time / 50) % 400 + 50, 
+    sin ( ($current_time / 400)) * 50 + 180, 
+     'Hello SDL::App::FPS!', [1,0.2,0.2] );
 
   if ($self->{benchmark})
     {
-    for (1..64)
+    for (1..128)
       {
       my $x = rand($self->width()); 
       my $y = rand($self->height());
@@ -118,6 +119,19 @@ sub draw_frame
      ($current_time / 150) % 200 + $self->height() - 100,
     'Hello OpenGL!', [ 0,0.7,1] );
   $self->{font_ver_zoom}->post_output();
+  
+  # some aligned text
+  $self->{font_right}->pre_output();
+  $self->{font_right}->output ( $self->width() - 5, 
+     ($current_time / 150) % 200 + 100,
+   'Right aligned text.');
+  $self->{font_right}->post_output();
+  
+  $self->{font_bottom}->pre_output();
+  $self->{font_bottom}->output ( 
+     ($current_time / 150) % 200 + 100,
+     0, 'Bottom aligned text.');
+  $self->{font_right}->post_output();
 
   SDL::GLSwapBuffers();		# without this, you won't see anything!
   }
@@ -146,6 +160,11 @@ sub post_init_handler
   $self->{font_ver_zoom} = $self->{font}->copy();
   $self->{font_ver_zoom}->spacing(0,-21);	# vertical output
   $self->{font_ver_zoom}->zoom(2,2);		# zoomed
+  $self->{font_right} = $self->{font}->copy();
+  $self->{font_right}->align_x(FONT_ALIGN_RIGHT);
+  $self->{font_bottom} = $self->{font}->copy();
+  $self->{font_bottom}->spacing(0,-21);		# vertical output
+  $self->{font_bottom}->align_y(FONT_ALIGN_BOTTOM);
   print "done.\n";
   
   $self->_gl_init_view();

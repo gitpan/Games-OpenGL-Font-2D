@@ -10,10 +10,25 @@ use strict;
 use Exporter;
 use SDL::OpenGL;
 use SDL::Surface;
-use vars qw/@ISA $VERSION/;
+use vars qw/@ISA $VERSION @EXPORT_OK/;
 @ISA = qw/Exporter/;
 
-$VERSION = '0.03';
+@EXPORT_OK = qw/
+	FONT_ALIGN_LEFT FONT_ALIGN_RIGHT FONT_ALIGN_CENTER
+	FONT_ALIGN_TOP FONT_ALIGN_BOTTOM
+	/;
+
+$VERSION = '0.04';
+
+##############################################################################
+# constants
+
+use constant FONT_ALIGN_LEFT => -1;
+use constant FONT_ALIGN_RIGHT => 1;
+use constant FONT_ALIGN_CENTER => 0;
+
+use constant FONT_ALIGN_TOP => -1;
+use constant FONT_ALIGN_BOTTOM => 1;
 
 ##############################################################################
 # methods
@@ -32,7 +47,6 @@ sub new
   $self->{file} = $args->{file} || '';
   $self->{color} = $args->{color} || [ 1,1,1 ];
   $self->{alpha} = $args->{alpha} || 1;
-  $self->{set} = 0;
   $self->{char_width} = int(abs($args->{char_width} || 16));
   $self->{char_height} = int(abs($args->{char_height} || 16));
   $self->{spacing_x} = int($args->{spacing_x} || $self->{char_width});
@@ -44,6 +58,12 @@ sub new
   $self->{zoom_y} = abs($args->{zoom_y} || 1);
   $self->{chars} = int(abs($args->{chars} || (256-32)));
   $self->{chars_per_line} = int(abs($args->{chars_per_line} || 32));
+  $self->{align_x} = $args->{align_x};
+  $self->{align_y} = $args->{align_y};
+  $self->{align_y} = -1 unless defined $self->{align_y};
+  $self->{align_x} = -1 unless defined $self->{align_x};
+  $self->{align_x} = int($self->{align_x});
+  $self->{align_y} = int($self->{align_x});
   
   $self->_read_font($self->{file});
   
@@ -92,8 +112,8 @@ sub _build_font
   my $w = int($cw * $self->{zoom_x});
   my $h = int($ch * $self->{zoom_y});
   # calculate w/h of a char in 0..1 space
-  my $cw = $cw/$self->{texture_width};
-  my $ch = $ch/$self->{texture_height};
+  $cw = $cw/$self->{texture_width};
+  $ch = $ch/$self->{texture_height};
   my $cx = 0; my $cy = 0;
   my $c = 0;
   # loop through all characters
@@ -185,10 +205,41 @@ sub output
   # Output the given string at the coordinates
   my ($self,$x,$y,$string,$color,$alpha) = @_;
 
+  return if $string eq '';
+
   # Reset The Modelview Matrix
   glLoadIdentity();
 
-  # Position The Text (0,0 is Bottom Left)
+  if ($self->{align_x} != FONT_ALIGN_LEFT)
+    {
+    # center or right aligned
+    my $tw = abs((length($string)-1) * $self->{spacing_x} * $self->{zoom_x});
+    # vertical text 
+    $tw += $self->{char_width} * $self->{zoom_x};
+    if ($self->{align_x} == FONT_ALIGN_RIGHT)
+      {
+      $x = $x - $tw;
+      }
+    else
+      {
+      $x = $x - $tw / 2;
+      }
+    }
+  if ($self->{align_y} != FONT_ALIGN_TOP)
+    {
+    my $th = abs((length($string)) * $self->{spacing_y} * $self->{zoom_y});
+    $th -= $self->{char_height} * $self->{zoom_y};
+    if ($self->{align_y} == FONT_ALIGN_BOTTOM)
+      {
+      $y = $y + $th;
+      }
+    else
+      {
+      $y = $y + $th / 2;
+      }
+    }
+
+  # translate to the top-left position of the text (after alignment)
   glTranslate( $x, $y, 0 );
 
   # set color and alpha value
@@ -209,13 +260,9 @@ sub output
 
   # Choose The Font Set (0 or 1) (-32 because our lists start at 0, and space
   # has an ASCII value of 32 and is the first existing character)
-  glListBase( $self->{base} - 32 + ( 128 * $self->{set} ) );
+  glListBase( $self->{base} - 32 );
 
-  # write the text to the screen
-  #my @chars = map { ord($_) } split //, $string;
-  # glCallLists( @chars); # , $chars[-1]);
-
-  # much faster
+  # render the string to the screen
   glCallListsScalar( $string );
 
   }
@@ -257,7 +304,17 @@ sub color
   {
   my $self = shift;
 
-  $self->{color} = shift if @_ > 0;
+  if (@_ > 0)
+    {
+    if (ref($_[0]) eq 'ARRAY')
+      {
+      $self->{color} = shift;
+      }
+    else
+      {
+      $self->{color} = [ $_[0], $_[1], $_[2] ];
+      }
+    }
   $self->{color};
   }
 
@@ -267,14 +324,6 @@ sub transparent
 
   $self->{transparent} = shift if @_ > 0;
   $self->{transparent};
-  }
-
-sub set
-  {
-  my $self = shift;
-
-  $self->{set} = $_[0] ? 1 : 0 if @_ > 0;
-  $self->{set};
   }
 
 sub alpha
@@ -351,6 +400,48 @@ sub copy
   $new;
   }
 
+sub align_x
+  {
+  my $self = shift;
+
+  $self->{align_x} = shift if @_ > 0;
+  $self->{align_x};
+  }
+
+sub align_y
+  {
+  my $self = shift;
+
+  $self->{align_y} = shift if @_ > 0;
+  $self->{align_y};
+  }
+
+sub align
+  {
+  my $self = shift;
+
+  if (@_ > 0)
+    {
+    $self->{align_x} = shift;
+    $self->{align_y} = shift;
+    }
+  ($self->{align_x}, $self->{align_y});
+  }
+
+sub char_height
+  {
+  my $self = shift;
+
+  $self->{char_height} * $self->{zoom_y};
+  }
+
+sub char_width
+  {
+  my $self = shift;
+
+  $self->{char_width} * $self->{zoom_x};
+  }
+
 1;
 
 __END__
@@ -379,7 +470,8 @@ Games::OpenGL::Font::2D - load/render 2D colored bitmap fonts via OpenGL
 
 	$font->pre_output();		# setup rendering for font
 	
-	$font->color( [ 0,1,0] );	# yellow
+	$font->color( [ 0,1,0] );	# yellow as array ref
+	$font->color( 1,0,0 );		# or red
 	$font->alpha( 0.8 );		# nearly opaque
 
 	# half-transparent, red
@@ -388,7 +480,6 @@ Games::OpenGL::Font::2D - load/render 2D colored bitmap fonts via OpenGL
 	$font->output (100,200, 'Hello OpenGL!' );
 	
 	$font->transparent( 1 );	# render font background transparent
-	$font->set( 1 );		# choose alternative font set
 	
 	$font->spacing_y( 16 );		# render vertical (costly rebuild!)
 	$font->spacing_x( 0 );		# (costly rebuild!)
@@ -398,7 +489,13 @@ Games::OpenGL::Font::2D - load/render 2D colored bitmap fonts via OpenGL
 
 =head1 EXPORTS
 
-Exports nothing on default.
+Exports nothing on default. Can export on demand the following:
+
+	FONT_ALIGN_LEFT
+	FONT_ALIGN_RIGHT
+	FONT_ALIGN_CENTER
+	FONT_ALIGN_TOP
+	FONT_ALIGN_BOTTOM
 
 =head1 DESCRIPTION
 
@@ -418,7 +515,6 @@ ref containing the following keys:
 	file		filename of font bitmap
 	transparent	if true, render font background transparent (e.g.
 			don't render it at all)
-	set		choose font 0 or 1 (each set has 128 letters)
 	color		color of output text as array ref [r,g,b]
 	alpha		blend font over background for semitransparent
 	char_width	Width of each char on the texture
@@ -426,6 +522,12 @@ ref containing the following keys:
   	chars		Number of characters on font-texture
 	spacing_x	Spacing in X direction after each char
 	spacing_y	Spacing in Y direction after each char
+	align_x		Align the font output in X direction
+			Possible: FONT_ALIGN_LEFT, FONT_ALIGN_RIGHT and
+			FONT_ALIGN_CENTER
+	align_y		Align the font output in Y direction
+			Possible: FONT_ALIGN_TOP, FONT_ALIGN_BOTTOM and
+			FONT_ALIGN_CENTER
 
 Example:
 
@@ -437,21 +539,14 @@ Example:
 
 =item output()
 
-	$font->output ($x,$y, $string, $color, $alpha, $set, $transparent);
+	$font->output ($x,$y, $string, $color, $alpha);
 
 Output the string C<$string> at the coordinates $x and $y. 0,0 is at the
 lower left corner of the screen.
 
-C<$color>, C<$alpha>, C<$set> and C<$transparent> are optional and if omitted
-or given as undef, will be taken from the font's internal values, which can
-be given at new() or modified with the routines below.
-
-=item set()
-
-	my $set = $font->set();
-	$font->set(1);
-
-Get/set the font set to use. Each set has 128 characters.
+C<$color> and C<$alpha> are optional and if omitted or given as undef, will
+be taken from the font's internal values, which can be given at new() or
+modified with the routines below.
 
 =item transparent()
 
@@ -464,6 +559,7 @@ background as transparent.
 
         $rgb = $font->color();		# [$r,$g, $b ]
         $font->color(1,0.1,0.8);	# set RGB
+        $font->color([1,0.1,0.8]);	# same, as array ref
         $font->color(undef);		# no color
 
 Sets the color, that will be set to render the font. No color means the caller
@@ -533,13 +629,46 @@ avoid the font-rebuilding for each text output.
 
 Sets up OpenGL so that the font can be rendered on the screen. 
 
-=item ppost_output()
+=item post_output()
 
 	$font->post_output();
 
 Resets some OpenGL stuff after rendering. If you reset OpenGL for the next
 frame anyway, or use a different font's pre_ouput() afterwards, you can skip
 this.
+
+=item align_x()
+
+	$x = $font->align_x();
+	$font->align_x( FONT_ALIGN_RIGHT );
+
+Get/set the alignment of the output in X direction.
+
+=item align_y()
+
+	$x = $font->align_y();
+	$font->align_y( FONT_ALIGN_TOP );
+
+Get/set the alignment of the output in Y direction.
+
+=item align()
+
+	($x,$y) = $font->align();
+	$font->align( FONT_ALIGN_RIGHT, FONT_ALIGN_TOP );
+
+Get/set the alignment of the output in X and Y direction.
+
+=item char_width()
+
+	$w = $font->char_width();
+
+Get the width of one character.
+
+=item char_height()
+
+	$w = $font->char_height();
+
+Get the height of one character.
 
 =back
 

@@ -12,19 +12,21 @@ why in this way, browse to:
 
 	http://bloodgate.com/perl/sdl/game.html
 
-See the above URL for examples on how to use this code.
+See the above URL for examples on how to use this code. The distribution
+contains an example, this uses SDL::App::FPS as a framework. So you will need
+SDL::App::FPS for the example, but you could also use this module stand-alone.
 
 Prerequisites
 =============
 
-You need SDL, SDL_image, SDL_perl to use this.
+You need SDL, SDL_image and SDL_perl v1.20.2 to use this.
 
 Installation
 ============
 
-* untar/ungzip the package (replace 0.01 with the version you got)
+* untar/ungzip the package (replace 0.04 with the version you got)
 
-	tar -xzf OpenGL-Font-2D-0.01.tar.gz
+	tar -xzf Games-OpenGL-Font-2D-0.04.tar.gz
 
 * Check the signature. Download my key from http://bloodgate.com/tels.asc or
   from my CPAN directory. Then do in the build directory (where you unwrapped
