@@ -131,7 +131,7 @@ sub draw_frame
   $self->{font_bottom}->output ( 
      ($current_time / 150) % 200 + 100,
      0, 'Bottom aligned text.');
-  $self->{font_right}->post_output();
+  $self->{font_bottom}->post_output();
 
   SDL::GLSwapBuffers();		# without this, you won't see anything!
   }

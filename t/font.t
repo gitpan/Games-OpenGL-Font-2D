@@ -22,6 +22,7 @@ can_ok ('Games::OpenGL::Font::2D', qw/
   post_output
   align_x align_y align
   char_width char_height
+  DELETE
   /);
 
 my $font = Games::OpenGL::Font::2D->new (

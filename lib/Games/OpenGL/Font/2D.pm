@@ -18,7 +18,7 @@ use vars qw/@ISA $VERSION @EXPORT_OK/;
 	FONT_ALIGN_TOP FONT_ALIGN_BOTTOM
 	/;
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 ##############################################################################
 # constants
@@ -66,6 +66,8 @@ sub new
   $self->{align_y} = int($self->{align_x});
   
   $self->_read_font($self->{file});
+  
+  $self->{pre_output} = 0;
   
   # Create the display lists
   $self->{base} = glGenLists( $self->{chars} );
@@ -162,13 +164,22 @@ sub pre_output
   {
   my $self = shift;
 
+  warn ("pre_output() called twice") if $self->{pre_output} != 0;
+  $self->{pre_output} = 1;
+
   # Select our texture
   glBindTexture( GL_TEXTURE_2D, $self->{texture} );
 
-  # Disable/Enable flags, unless they are already in the right state
+  $self->{gl_flags} = [ 
+    glIsEnabled(GL_DEPTH_TEST),
+    glIsEnabled(GL_TEXTURE_2D),
+    glIsEnabled(GL_CULL_FACE),
+    ];
+  # Disable/Enable flags
   glDisable( GL_DEPTH_TEST );
-  glDepthMask(GL_FALSE);	# disable writing to depth buffer
   glEnable( GL_TEXTURE_2D );
+  glDisable( GL_CULL_FACE );
+  glDepthMask(GL_FALSE);	# disable writing to depth buffer
   
   glEnable( GL_BLEND );
   # Select The Type Of Blending
@@ -269,6 +280,12 @@ sub output
 
 sub post_output
   {
+  my $self = shift;
+
+  warn ("post_output() called before pre_output()")
+    if $self->{pre_output} == 0;
+  $self->{pre_output} = 0;
+
   # Reset the OpenGL stuff
 
   # Select The Projection Matrix
@@ -281,7 +298,13 @@ sub post_output
   # Restore the Old Projection Matrix
   glPopMatrix();
 
-  # Caller must re-enable or re-disable flags if he wishes
+  my $flags = $self->{gl_flags};
+  glEnable(GL_DEPTH_TEST)  if $flags->[0];
+  glEnable(GL_TEXTURE_2D)  if $flags->[1];
+  glEnable(GL_CULL_FACE)   if $flags->[2];
+  glDepthMask(GL_TRUE);		# enable writing to depth buffer
+  
+  # Caller must re-enable or re-disable other flags if she wishes
   }
 
 sub screen_width
@@ -440,6 +463,13 @@ sub char_width
   my $self = shift;
 
   $self->{char_width} * $self->{zoom_x};
+  }
+
+sub DESTROY
+  {
+  my $self = shift;
+
+  glDeleteLists( $self->{base} ) if defined $self->{base};
   }
 
 1;
@@ -636,6 +666,11 @@ Sets up OpenGL so that the font can be rendered on the screen.
 Resets some OpenGL stuff after rendering. If you reset OpenGL for the next
 frame anyway, or use a different font's pre_ouput() afterwards, you can skip
 this.
+
+Please remember to enable/disable any flags that you might want. 
+
+Also note, post_output() enables writes to the depth buffer, regardless of
+whether they were enabled or not before pre_output() was called.
 
 =item align_x()
 

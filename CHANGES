@@ -20,6 +20,11 @@ Games::OpenGL::Font::2D:
     where foo is LEFT, RIGHT, TOP, BOTTOM or CENTER.
   * added char_width(), char_height()
   * fixed: color() takes array ref or 3 values
+2003-04-08 v0.05 Tels - 8 tests
+  * post_output() and pre_output() warn when called in wrong order
+  * post_output() restores flags to pre pre_output() way
+  * document that post_output() disables writes to depth buffer
+  * DESTROY method released OpenGL lists by using glDeleteLists()
 
 Please send me test-reports, your experiences with this and your ideas - I love
 to hear about my work!
