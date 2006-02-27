@@ -7,7 +7,7 @@ use strict;
 BEGIN
   {
   $| = 1;
-  unshift @INC, './lib';
+  unshift @INC, 'lib';
   unshift @INC, '../lib';
   unshift @INC, '../blib/arch/';
   }

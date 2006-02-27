@@ -1,6 +1,11 @@
 
-############################################################################## 
 Games::OpenGL::Font::2D:
+
+2006-02-25 v0.07 Tels - 10 tests
+  * fix to work with current SDL_perl
+
+############################################################################## 
+Older changes:
 
 2003-03-17 v0.01 Tels - 2 tests - first version
 2003-03-18 v0.02 Tels - 7 tests
@@ -29,7 +34,6 @@ Games::OpenGL::Font::2D:
   * fixed the DESTROY method
   * copy(): GLGenLists($self->{chars}), not just 256
   * added border_x(), border_y() and support for these in new()
-
 
 Please send me test-reports, your experiences with this and your ideas - I love
 to hear about my work!

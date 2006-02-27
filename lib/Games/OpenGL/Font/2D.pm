@@ -1,5 +1,4 @@
-
-# Games-OpenGL-Font-2D - load/render 2d fonts to via OpenGL
+# Games-OpenGL-Font-2D - load/render 2D fonts via OpenGL
 
 package Games::OpenGL::Font::2D;
 
@@ -18,7 +17,7 @@ use vars qw/@ISA $VERSION @EXPORT_OK/;
 	FONT_ALIGN_TOP FONT_ALIGN_BOTTOM
 	/;
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 ##############################################################################
 # constants
@@ -281,7 +280,7 @@ sub output
   glListBase( $self->{base} - 32 );
 
   # render the string to the screen
-  glCallListsScalar( $string );
+  glCallListsString( $string );
 
   }
 
@@ -523,7 +522,6 @@ Games::OpenGL::Font::2D - load/render 2D colored bitmap fonts via OpenGL
 
 	use SDL::App::FPS;
 
-
 	my $app = SDL::App::FPS->new( ... );
 
 	# don't forget to change these on resize events!
@@ -561,7 +559,7 @@ Exports nothing on default. Can export on demand the following:
 
 =head1 DESCRIPTION
 
-This package let's you load and render colored bitmap fonts via OpenGL.
+This package lets you load and render colored bitmap fonts via OpenGL.
 
 =head1 METHODS
 
@@ -571,12 +569,12 @@ This package let's you load and render colored bitmap fonts via OpenGL.
 
 	my $font = OpenGL::Font::2D->new( $args );
 
-Load a model into memory and return an object reference. C<$args> is a hash
+Load a font into memory and return an object reference. C<$args> is a hash
 ref containing the following keys:
 
 	file		filename of font bitmap
 	transparent	if true, render font background transparent (e.g.
-			don't render it at all)
+			don't render the background)
 	color		color of output text as array ref [r,g,b]
 	alpha		blend font over background for semitransparent
 	char_width	Width of each char on the texture
@@ -759,13 +757,14 @@ Get the height of one character.
 
 =back
 
-=head1 KNOWN BUGS
+=head1 LICENSE
 
-None yet.
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =head1 AUTHORS
 
-(c) 2003 Tels <http://bloodgate.com/>
+(c) 2003, 2006 Tels <http://bloodgate.com/>
 
 =head1 SEE ALSO
 
